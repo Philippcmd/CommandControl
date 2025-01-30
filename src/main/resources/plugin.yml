@@ -3,4 +3,15 @@ version: '1.0-SNAPSHOT'
 main: dev.philippcmd.commandControl.CommandControl
 api-version: '1.21'
 authors: [ PhilippCMD ]
-description: tools to Manage your server
+description: Simple Tool to temporarily deactivate commands
+
+commands:
+  deactivate-command:
+    description: Deactivate a command.
+    usage: /deactivate-command <command>
+    permission: op
+
+  reactivate-command:
+    description: Reactivate a command.
+    usage: /reactivate-command <command>
+    permission: op
