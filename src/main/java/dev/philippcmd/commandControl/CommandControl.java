@@ -1,82 +1,37 @@
 package dev.philippcmd.commandControl;
 
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandSender;
+import dev.philippcmd.commandControl.commands.DeactivateCommand;
+import dev.philippcmd.commandControl.commands.ReactivateCommand;
+import dev.philippcmd.commandControl.commands.ReallowCommand;
+import dev.philippcmd.commandControl.commands.RestrictCommand;
+import dev.philippcmd.commandControl.events.CommandListener;
+import dev.philippcmd.commandControl.util.CommandUtils;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.configuration.file.FileConfiguration;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class CommandControl extends JavaPlugin {
 
-    private List<String> deactivatedCommands;
-    private FileConfiguration config;
-
     @Override
     public void onEnable() {
-        // Load or create the config file
+        // Save default config (if it doesn't exist)
         this.saveDefaultConfig();
-        config = this.getConfig();
 
-        // Load deactivated commands from config
-        deactivatedCommands = config.getStringList("deactivatedCommands");
+        // Load restricted commands from config
+        CommandUtils.loadRestrictedCommands(this.getConfig());
 
-        // Register the command executor
-        this.getCommand("deactivate-command").setExecutor(this);
-        this.getCommand("reactivate-command").setExecutor(this);
+        // Register commands
+        this.getCommand("deactivate-command").setExecutor(new DeactivateCommand(this));
+        this.getCommand("reactivate-command").setExecutor(new ReactivateCommand(this));
+        this.getCommand("restrict-command").setExecutor(new RestrictCommand(this));
+        this.getCommand("reallow-command").setExecutor(new ReallowCommand(this));
 
-        // Register the event listener
-        this.getServer().getPluginManager().registerEvents(new CommandListener(this), this);
+        // Register event listener
+        this.getServer().getPluginManager().registerEvents(new CommandListener(), this);
     }
 
     @Override
     public void onDisable() {
-        // Save deactivated commands to config
-        config.set("deactivatedCommands", deactivatedCommands);
+        // Save restricted commands to config
+        CommandUtils.saveRestrictedCommands(this.getConfig());
         this.saveConfig();
-    }
-
-    @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (command.getName().equalsIgnoreCase("deactivate-command")) {
-            if (args.length == 0) {
-                sender.sendMessage("Usage: /deactivate-command <command>");
-                return true;
-            }
-
-            String cmd = args[0].toLowerCase();
-            if (cmd.equals("deactivate-command") || cmd.equals("reactivate-command")) {
-                sender.sendMessage("You cannot deactivate this command.");
-                return true;
-            }
-
-            if (!deactivatedCommands.contains(cmd)) {
-                deactivatedCommands.add(cmd);
-                sender.sendMessage("Command '" + cmd + "' has been deactivated.");
-            } else {
-                sender.sendMessage("Command '" + cmd + "' is already deactivated.");
-            }
-            return true;
-        } else if (command.getName().equalsIgnoreCase("reactivate-command")) {
-            if (args.length == 0) {
-                sender.sendMessage("Usage: /reactivate-command <command>");
-                return true;
-            }
-
-            String cmd = args[0].toLowerCase();
-            if (deactivatedCommands.contains(cmd)) {
-                deactivatedCommands.remove(cmd);
-                sender.sendMessage("Command '" + cmd + "' has been reactivated.");
-            } else {
-                sender.sendMessage("Command '" + cmd + "' is not deactivated.");
-            }
-            return true;
-        }
-        return false;
-    }
-
-    public boolean isCommandDeactivated(String command) {
-        return deactivatedCommands.contains(command.toLowerCase());
     }
 }
